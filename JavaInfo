@@ -1,0 +1,93 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Spec::Functions;
+
+sub main(@) {
+    foreach my $node (@_) {
+	if (!process_node($node)) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+sub process_node($) {
+    my $node = shift();
+    if (-f $node) {
+	return process_file($node);
+    } elsif (-d $node) {
+	return process_dir($node);
+    }
+    return 0;
+}
+
+sub process_dir($) {
+    my $dir = shift();
+    if (opendir(DIR, $dir)) {
+	if (my @nodes = readdir(DIR)) {
+	    foreach my $node (no_upwards(@nodes)) {
+		if (!process_node(catfile($dir, $node))) {
+		    return 1;
+		}
+	    }
+	} else {
+	    print STDERR "$dir: could not read directory ($!)\n";
+	    return 1;
+	}
+	closedir(DIR);
+    } else {
+	print STDERR "$dir: could not open directory ($!)\n";
+	return 1;
+    }
+    return 0;
+}
+
+sub process_file($) {
+    my $file = shift();
+    if (open(FILE, $file)) {
+	binmode(FILE);
+	my $buffer;
+	if (read(FILE, $buffer, 8)) {
+	    my @fields = unpack('NN', $buffer);
+	    if ($fields[0] == 0xCAFEBABE) {
+		my $minor = ($fields[1] & 0xFF00) >> 16;
+		my $major = $fields[1] & 0x00FF;
+		my $version = '';
+		if ($major == 45) {
+		    if ($minor <= 3) {
+			$version = '1.0.2';
+		    } else {
+			$version = '1.1.8';
+		    }
+		} elsif ($major == 46) {
+		    $version = '1.2.2';
+		} elsif ($major == 47) {
+		    $version = '1.3.1';
+		} elsif ($major == 48) {
+		    $version = '1.4.2';
+		} elsif ($major == 49) {
+		    $version = '5.0';
+		} elsif ($major == 50) {
+		    $version = '6.0';
+		} elsif ($major == 51) {
+		    $version = '7.0';
+		}
+		print "$file: Java " . $version . " [" . $minor . "/" . $major . "]\n";
+	    } else {
+		print "$file: not a java class file\n";
+	    }
+	} else {
+	    print STDERR "$file: could not read file ($!)\n";
+	    return 1;
+	}
+	close(FILE);
+    } else {
+	print STDERR "$file: could not open file ($!)\n";
+	return 1;
+    }
+    return 0;
+}
+
+exit main(@ARGV);
