@@ -4,13 +4,13 @@ use strict;
 use warnings;
 use File::Spec::Functions;
 
-sub main(@) {
+sub main {
     foreach my $node (@_) {
 	process_node($node);
     }
 }
 
-sub process_node($) {
+sub process_node {
     my $node = shift();
     if (-f $node) {
 	process_file($node);
@@ -19,7 +19,7 @@ sub process_node($) {
     }
 }
 
-sub process_dir($) {
+sub process_dir {
     my $dir = shift();
     if (opendir(DIR, $dir)) {
 	if (my @nodes = readdir(DIR)) {
@@ -35,10 +35,10 @@ sub process_dir($) {
     }
 }
 
-sub process_file($) {
+sub process_file {
     my $file = shift();
-    if (open(FILE, $file)) {
-	binmode(FILE);
+    if (open(my $FILE, '<', $file)) {
+	binmode($FILE);
 	my $buffer;
 	if (read(FILE, $buffer, 8)) {
 	    my @fields = unpack('NN', $buffer);
@@ -68,7 +68,7 @@ sub process_file($) {
 	} else {
 	    die "$file: could not read file ($!)\n";
 	}
-	close(FILE);
+	close($FILE);
     } else {
 	die "$file: could not open file ($!)\n";
     }
