@@ -21,7 +21,7 @@ sub process_node {
 
 sub process_dir {
     my $dir = shift();
-    if (opendir(DIR, $dir)) {
+    if (opendir(my $DIR, $dir)) {
 	if (my @nodes = readdir(DIR)) {
 	    foreach my $node (no_upwards(@nodes)) {
 		process_node(catfile($dir, $node));
