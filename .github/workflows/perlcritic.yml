@@ -30,7 +30,7 @@ jobs:
           IFS=$'\n\t'
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libperl-critic-perl=1.152-1
-          if sudo apt-get upgrade -s | tee -a /dev/stderr | grep -q -e '^Inst libperl-critic-perl '; then
+          if sudo apt-get upgrade -s libperl-critic-perl | tee -a /dev/stderr | grep -q -e '^Inst libperl-critic-perl '; then
             exit 1
           fi
       - name: Run PerlCritic
