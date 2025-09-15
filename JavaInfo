@@ -43,8 +43,8 @@ sub process_file {
 	if (read(FILE, $buffer, 8)) {
 	    my @fields = unpack('NN', $buffer);
 	    if ($fields[0] == 0xCAFEBABE) {
-		my $minor = ($fields[1] & 0xFF00) >> 16;
-		my $major = $fields[1] & 0x00FF;
+		my $minor = ($fields[1] & 0xFF00) >> 16; ## no critic [Use of bitwise operator]: indeed
+		my $major = $fields[1] & 0x00FF; ## no critic [Use of bitwise operator]: indeed
 		my $version = '';
 		if ($major == 45) {
 		    if ($minor <= 3) {
