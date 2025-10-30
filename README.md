@@ -92,19 +92,7 @@ The tool uses the following mapping between bytecode major versions and Java rel
 | 50            | -             | 6            |
 | 51            | -             | 7            |
 | 52            | -             | 8            |
-| 53            | -             | 9            |
-| 54            | -             | 10           |
-| 55            | -             | 11           |
-| 56            | -             | 12           |
-| 57            | -             | 13           |
-| 58            | -             | 14           |
-| 59            | -             | 15           |
-| 60            | -             | 16           |
-| 61            | -             | 17           |
-| 62            | -             | 18           |
-| 63            | -             | 19           |
-| 64            | -             | 20           |
-| 65            | -             | 21           |
+| ...           | -             | ...          |
 
 For Java 5 and later, the formula is: **Java Version = Major Version - 44**
 
