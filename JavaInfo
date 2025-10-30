@@ -1,15 +1,52 @@
 #!/usr/bin/perl
 
+################################################################################
+# JavaInfo - Java Class File Version Analyzer
+#
+# This utility extracts Java version information from compiled class files by
+# reading their bytecode headers. It recursively processes files and directories
+# to identify Java class files and report their compilation version.
+#
+# The script reads the first 8 bytes of each file, checks for the Java class
+# file magic number (0xCAFEBABE), and extracts the major/minor version numbers
+# which indicate the Java version used to compile the class.
+#
+# Usage: JavaInfo <file or directory> [<file or directory> ...]
+#
+# Examples:
+#   JavaInfo MyClass.class
+#   JavaInfo /path/to/project/bin
+#   JavaInfo target/classes lib/*.jar
+#
+# Author: Thomas
+# License: See LICENSE file
+################################################################################
+
 use strict;
 use warnings;
 use File::Spec::Functions;
 
+#
+# Main entry point - processes all command-line arguments
+#
+# Parameters:
+#   @_ - List of file or directory paths to process
+#
 sub main {
     foreach my $node (@_) {
 	process_node($node);
     }
 }
 
+#
+# Process a filesystem node (file or directory)
+#
+# Determines whether the given path is a file or directory and dispatches
+# to the appropriate handler function.
+#
+# Parameters:
+#   $node - Path to the filesystem node to process
+#
 sub process_node {
     my $node = shift();
     if (-f $node) {
@@ -19,6 +56,19 @@ sub process_node {
     }
 }
 
+#
+# Recursively process all files in a directory
+#
+# Reads all entries in the directory (excluding . and ..) and recursively
+# processes each one by calling process_node.
+#
+# Parameters:
+#   $dir - Path to the directory to process
+#
+# Dies on error:
+#   - If the directory cannot be opened
+#   - If the directory contents cannot be read
+#
 sub process_dir {
     my $dir = shift();
     if (opendir(my $DIR, $dir)) {
@@ -35,17 +85,51 @@ sub process_dir {
     }
 }
 
+#
+# Process a single file and extract Java version information
+#
+# Reads the first 8 bytes of a file to check if it's a valid Java class file
+# (identified by the magic number 0xCAFEBABE) and extracts version information
+# from the bytecode header.
+#
+# Java class file format (first 8 bytes):
+#   Bytes 0-3: Magic number (0xCAFEBABE)
+#   Bytes 4-5: Minor version
+#   Bytes 6-7: Major version
+#
+# Version mapping:
+#   Major 45 (minor <=3): Java 1.0.2
+#   Major 45 (minor >3):  Java 1.1.8
+#   Major 46:             Java 1.2.2
+#   Major 47:             Java 1.3.1
+#   Major 48:             Java 1.4.2
+#   Major 49+:            Java (major - 44)  [e.g., 52 = Java 8, 61 = Java 17]
+#
+# Parameters:
+#   $file - Path to the file to process
+#
+# Dies on error:
+#   - If the file cannot be opened
+#   - If the file cannot be read
+#   - If the file is not a valid Java class file
+#
 sub process_file {
     my $file = shift();
     if (open(my $FILE, '<', $file)) {
 	binmode($FILE);
 	my $buffer;
 	if (read(FILE, $buffer, 8)) {
+	    # Unpack the first 8 bytes as two 32-bit unsigned integers (big-endian)
 	    my @fields = unpack('NN', $buffer);
+
+	    # Check for Java class file magic number (0xCAFEBABE)
 	    if ($fields[0] == 0xCAFEBABE) {
+		# Extract minor and major version numbers from the second 32-bit value
 		my $minor = ($fields[1] & 0xFF00) >> 16; ## no critic [Use of bitwise operator]: indeed
 		my $major = $fields[1] & 0x00FF; ## no critic [Use of bitwise operator]: indeed
 		my $version = '';
+
+		# Map major/minor version to Java release version
 		if ($major == 45) {
 		    if ($minor <= 3) {
 			$version = '1.0.2';
@@ -59,6 +143,7 @@ sub process_file {
 		} elsif ($major == 48) {
 		    $version = '1.4.2';
 		} elsif ($major >= 49) {
+		    # Java 5 and later: version = major - 44
 		    $version = ($major - 44);
 		}
 		print "$file: Java " . $version . " [" . $minor . "/" . $major . "]\n";
