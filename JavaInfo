@@ -72,14 +72,14 @@ sub process_node {
 sub process_dir {
     my $dir = shift();
     if (opendir(my $DIR, $dir)) {
-	if (my @nodes = readdir(DIR)) {
+	if (my @nodes = readdir($DIR)) {
 	    foreach my $node (no_upwards(@nodes)) {
 		process_node(catfile($dir, $node));
 	    }
 	} else {
 	    die "$dir: could not read directory ($!)\n";
 	}
-	closedir(DIR);
+	closedir($DIR);
     } else {
 	die "$dir: could not open directory ($!)\n";
     }
@@ -118,15 +118,15 @@ sub process_file {
     if (open(my $FILE, '<', $file)) {
 	binmode($FILE);
 	my $buffer;
-	if (read(FILE, $buffer, 8)) {
+	if (read($FILE, $buffer, 8)) {
 	    # Unpack the first 8 bytes as two 32-bit unsigned integers (big-endian)
 	    my @fields = unpack('NN', $buffer);
 
 	    # Check for Java class file magic number (0xCAFEBABE)
 	    if ($fields[0] == 0xCAFEBABE) {
 		# Extract minor and major version numbers from the second 32-bit value
-		my $minor = ($fields[1] & 0xFF00) >> 16; ## no critic [Use of bitwise operator]: indeed
-		my $major = $fields[1] & 0x00FF; ## no critic [Use of bitwise operator]: indeed
+		my $minor = $fields[1] >> 16; ## no critic [Use of bitwise operator]: indeed
+		my $major = $fields[1] & 0xFFFF; ## no critic [Use of bitwise operator]: indeed
 		my $version = '';
 
 		# Map major/minor version to Java release version
